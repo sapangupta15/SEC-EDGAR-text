@@ -22,7 +22,7 @@ from src.utils import logger, sql_cursor, sql_connection
 
 def main():
     try:
-        Downloader().download_companies(do_save_full_document=False)
+        Downloader().download_companies(do_save_full_document=False, do_store_in_s3=False)
     except Exception:
         # this makes sure that the full error message is recorded in
         # the logger text file for the process

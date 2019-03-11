@@ -20,6 +20,7 @@ import json
 import sqlite3
 import multiprocessing as mp
 from copy import copy
+import boto3
 
 
 """Parse the command line arguments
@@ -42,6 +43,7 @@ parser.add_argument('--start_company')
 parser.add_argument('--end_company')
 parser.add_argument('--traffic_limit_pause_ms')
 parser.add_argument('--multiprocessing_cores')
+parser.add_argument('--s3_bucket_name')
 args = parser.parse_args()
 
 if args.storage:
@@ -213,6 +215,16 @@ if args.multiprocessing_cores:
 else:
     args.multiprocessing_cores = 0
 
+if args.s3_bucket_name:
+    bucket_name = args.s3_bucket_name
+else:
+    bucket_name = 'sec_filings'
+
+if args.aws_region_name:
+    region_name = args.aws_region_name
+else:
+    region_name = 'eu-west-1'
+
 
 """Create search_terms_regex, which stores the patterns that we
 use for identifying sections in each of EDGAR documents types
@@ -276,6 +288,23 @@ def requests_get(url, params=None):
         sys.exit('Download repeatedly failed: %s' %
                  url)
     return r
+
+def store_doc_in_s3(s3_object_text, company_id, date_of_filing, document_type):
+    # if you're running this on EC2 or lambda etc with right IAM role, 
+    # or if the credentials are configured in ~/.aws/credentials,
+    # then the below code will work as is.
+    # else use pass in access key and secret key as below:
+    # client = boto3.client('s3',aws_access_key_id=ACCESS_KEY,
+    # aws_secret_access_key=SECRET_KEY,aws_session_token=SESSION_TOKEN)
+    if company_id and date_of_filing and document_type:
+        s3 = boto3.client('s3', region_name=region_name)
+        object_id = company_id + '_' + date_of_filing + '_' + document_type
+        
+        s3.put_object(Body=s3_object_text, Bucket=bucket_name, Key=object_id)
+        logger.info("added file to s3 bucket: %s, with key: %s", bucket_name, object_id)
+    else:
+        logger.error("document does not have enough details")
+
 
 
 

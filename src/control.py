@@ -19,7 +19,7 @@ class Downloader(object):
     def __init__(self):
         self.storage_path = args.storage
 
-    def download_companies (self, do_save_full_document=False):
+    def download_companies (self, do_save_full_document=False, do_store_in_s3=False):
         """Iterate through a list of companies and download documents.
 
         Downloading document contents within each filing type required
@@ -98,7 +98,8 @@ class Downloader(object):
                                             filing_search_string,
                                             date_search_string,
                                             str(start_date),
-                                            str(end_date), do_save_full_document)
+                                            str(end_date), do_save_full_document, 
+                                            do_store_in_s3)
             if len(os.listdir(storage_subdirectory)) > MAX_FILES_IN_SUBDIRECTORY:
                 storage_subdirectory_number += 1
         logger.warning("SUCCESS: Finished attempted download of " +

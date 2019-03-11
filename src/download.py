@@ -12,11 +12,12 @@ import re
 import copy
 from bs4 import BeautifulSoup
 
-from .utils import args, logger, requests_get
+from .utils import args, logger, requests_get, store_doc_in_s3
 from .metadata import Metadata
 from .utils import search_terms as master_search_terms
 from .html_document import HtmlDocument
 from .text_document import TextDocument
+from .elasticsearch_document import ElasticSearchDocument
 
 
 class EdgarCrawler(object):
@@ -26,7 +27,7 @@ class EdgarCrawler(object):
     def download_filings(self, company_description, edgar_search_string,
                          filing_search_string, date_search_string,
                          start_date, end_date,
-                         do_save_full_document, count=100):
+                         do_save_full_document, do_store_in_s3, count=100):
         """Build a list of all filings of a certain type, within a date range.
 
         Then download them and extract the text of interest
@@ -68,11 +69,11 @@ class EdgarCrawler(object):
                 if is_multiprocessing:
                     # multi-core processing. Add jobs to pool.
                     pool.apply_async(self.download_filing,
-                                     args=(filing_metadata, do_save_full_document),
+                                     args=(filing_metadata, do_save_full_document, do_store_in_s3),
                                      callback=self.process_log_cache)
                 else:
                     # single core processing
-                    log_cache = self.download_filing(filing_metadata, do_save_full_document)
+                    log_cache = self.download_filing(filing_metadata, do_save_full_documen, do_store_in_s3t)
                     self.process_log_cache(log_cache)
         if is_multiprocessing:
             pool.close()
@@ -150,7 +151,7 @@ class EdgarCrawler(object):
         return linkList
 
 
-    def download_filing(self, filing_metadata, do_save_full_document):
+    def download_filing(self, filing_metadata, do_save_full_document, do_store_in_s3):
         """
         Download filing, extract relevant sections.
 
@@ -245,9 +246,17 @@ class EdgarCrawler(object):
                     main_path = local_path + ".txt"
                     reader_class = TextDocument
                 doc_metadata.original_file_size = str(len(doc_text)) + ' chars'
-                sections_log_items = reader_class(
+                document_reader = reader_class(
                     doc_metadata.original_file_name,
-                    doc_text, doc_metadata.extraction_method).\
+                    doc_text, doc_metadata.extraction_method)
+                prepare_text = document_reader.prepare_text()
+                if do_store_in_s3:
+                    document_text_extracted = document_reader.plaintext.strip()
+                    es_doc = ElasticSearchDocument()
+                    es_doc_body = es_doc.generate_document_from10k(doc_metadata, document_text_extracted)
+                    store_doc_in_s3(es_doc_body, doc_metadata.company_id, 
+                                    doc_metadata.sec_filing_date, doc_metadata.document_type)
+                sections_log_items = document_reader.\
                     get_excerpt(doc_text, document_group,
                                 doc_metadata,
                                 skip_existing_excerpts=False)
