@@ -44,6 +44,7 @@ parser.add_argument('--end_company')
 parser.add_argument('--traffic_limit_pause_ms')
 parser.add_argument('--multiprocessing_cores')
 parser.add_argument('--s3_bucket_name')
+parser.add_argument('--aws_region_name')
 args = parser.parse_args()
 
 if args.storage:
