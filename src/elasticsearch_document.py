@@ -12,7 +12,7 @@ class ElasticSearchDocument(object):
     # company_id, document_group, document_type, extraction_method, 
     # sec_cik, sec_company_name, sec_filing_date, sec_url, sec_period_of_interest
     def generate_document_from10k(self, doc_metadata, doc_text):
-        self.company_id = doc_metadata.company_id
+        self.company_id = doc_metadata.company_description
         self.company_name = doc_metadata.sec_company_name
         self.filing_date = doc_metadata.sec_filing_date
         self.document_group = doc_metadata.document_group
