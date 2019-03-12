@@ -22,5 +22,5 @@ class ElasticSearchDocument(object):
         self.doc_extension = doc_metadata.extraction_method
         self.doc_url = doc_metadata.sec_url
         self.doc_text = doc_text
-        return json.dumps(self)
+        # return json.dumps(self)
 

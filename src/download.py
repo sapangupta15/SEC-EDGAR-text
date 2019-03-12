@@ -10,6 +10,7 @@ import multiprocessing as mp
 import os
 import re
 import copy
+import json
 from bs4 import BeautifulSoup
 
 from .utils import args, logger, requests_get, store_doc_in_s3
@@ -253,8 +254,8 @@ class EdgarCrawler(object):
                 if do_store_in_s3:
                     document_text_extracted = document_reader.plaintext.strip()
                     es_doc = ElasticSearchDocument()
-                    es_doc_body = es_doc.generate_document_from10k(doc_metadata, document_text_extracted)
-                    store_doc_in_s3(es_doc_body, doc_metadata.company_description, 
+                    es_doc.generate_document_from10k(doc_metadata, document_text_extracted)
+                    store_doc_in_s3(json.dumps(es_doc.__dict__), doc_metadata.company_description, 
                                     doc_metadata.sec_filing_date, doc_metadata.document_type)
                 sections_log_items = document_reader.\
                     get_excerpt(doc_text, document_group,
