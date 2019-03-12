@@ -17,7 +17,7 @@ class ElasticSearchDocument(object):
         self.filing_date = doc_metadata.sec_filing_date
         self.document_group = doc_metadata.document_group
         self.document_type = doc_metadata.document_type
-        self.cik = doc_metadata.cik
+        self.cik = doc_metadata.sec_cik
         self.period_of_interest = doc_metadata.sec_period_of_interest
         self.doc_extension = doc_metadata.extraction_method
         self.doc_url = doc_metadata.sec_url
