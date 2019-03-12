@@ -73,7 +73,7 @@ class EdgarCrawler(object):
                                      callback=self.process_log_cache)
                 else:
                     # single core processing
-                    log_cache = self.download_filing(filing_metadata, do_save_full_document, do_store_in_s3t)
+                    log_cache = self.download_filing(filing_metadata, do_save_full_document, do_store_in_s3)
                     self.process_log_cache(log_cache)
         if is_multiprocessing:
             pool.close()
