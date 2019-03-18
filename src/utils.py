@@ -21,6 +21,9 @@ import sqlite3
 import multiprocessing as mp
 from copy import copy
 import boto3
+from elasticsearch import Elasticsearch, RequestsHttpConnection
+from requests_aws4auth import AWS4Auth
+from datetime import datetime
 
 
 """Parse the command line arguments
@@ -45,6 +48,7 @@ parser.add_argument('--traffic_limit_pause_ms')
 parser.add_argument('--multiprocessing_cores')
 parser.add_argument('--s3_bucket_name')
 parser.add_argument('--aws_region_name')
+parser.add_argument('--aws_elasticsearch_host')
 args = parser.parse_args()
 
 if args.storage:
@@ -226,6 +230,9 @@ if args.aws_region_name:
 else:
     region_name = 'eu-west-1'
 
+if args.aws_elasticsearch_host:
+    es_host = args.aws_elasticsearch_host
+
 
 """Create search_terms_regex, which stores the patterns that we
 use for identifying sections in each of EDGAR documents types
@@ -305,6 +312,45 @@ def store_doc_in_s3(s3_object_text, company_id, date_of_filing, document_type):
         logger.info("added file to s3 bucket: %s, with key: %s", bucket_name, object_id)
     else:
         logger.error("document does not have enough details")
+
+def load_into_elasticsearch(es_document, company_id, date_of_filing, document_type):
+    if (es_host):
+        report_period_date = datetime.strptime(date_of_filing, '%Y%m%d')
+        report_year = report_period_date.year
+        document_type = document_type.replace('_', '').replace('-','')
+        index_name = report_year + '-' + document_type
+
+        service='es'
+        credentials = boto3.Session().get_credentials()
+        awsauth = AWS4Auth(credentials.access_key, credentials.secret_key, 
+                            region_name, service, session_token=credentials.token)
+        es = Elasticsearch(
+            hosts = [{'host': es_host, 'port': 443}],
+            http_auth = awsauth,
+            use_ssl = True,
+            verify_certs = True,
+            connection_class = RequestsHttpConnection
+        )
+        if not(es.indices.exists(index_name)):
+            req_body = '''
+            {
+                "settings": {
+                    "number_of_shards": 3,
+                    "number_of_replicas": 1
+                }
+            }
+            '''
+            es.indices.create(index = index_name, bosy = req_body)
+            es.indices.put_alias(index = index_name, name = report_year)
+            es.indices.put_alias(index = index_name, name = document_type)
+        doc_type = 'filings'
+        es.index(index = index_name, body = es_document)
+        logger.info('document added to elastic search index for company_id: %s and year: %s and type: %s', 
+                    company_id, str(report_year), document_type)
+    else:
+        logger.error('no elasticsearch host provided, hence cannot write to index for company_id: %s and year: %s and type: %s', 
+                    company_id, str(report_year), document_type)
+
 
 
 
