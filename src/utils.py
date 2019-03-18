@@ -339,7 +339,7 @@ def load_into_elasticsearch(es_document, company_id, date_of_filing, document_ty
                 }
             }
             '''
-            es.indices.create(index = index_name, bosy = req_body)
+            es.indices.create(index = index_name, body = req_body)
             es.indices.put_alias(index = index_name, name = report_year)
             es.indices.put_alias(index = index_name, name = document_type)
         doc_type = 'filings'
