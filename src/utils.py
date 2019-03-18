@@ -343,7 +343,7 @@ def load_into_elasticsearch(es_document, company_id, date_of_filing, document_ty
             es.indices.put_alias(index = index_name, name = report_year)
             es.indices.put_alias(index = index_name, name = document_type)
         doc_type = 'filings'
-        es.index(index = index_name, body = es_document)
+        es.index(index = index_name, body = es_document, doc_type=doc_type)
         logger.info('document added to elastic search index for company_id: %s and year: %s and type: %s', 
                     company_id, str(report_year), document_type)
     else:
