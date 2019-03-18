@@ -317,7 +317,7 @@ def load_into_elasticsearch(es_document, company_id, date_of_filing, document_ty
         report_period_date = datetime.datetime.strptime(date_of_filing, '%Y%m%d')
         report_year = report_period_date.year
         document_type = document_type.replace('_', '').replace('-','')
-        index_name = report_year + '-' + document_type
+        index_name = str(report_year) + '-' + document_type
 
         service='es'
         credentials = boto3.Session().get_credentials()
