@@ -23,7 +23,6 @@ from copy import copy
 import boto3
 from elasticsearch import Elasticsearch, RequestsHttpConnection
 from requests_aws4auth import AWS4Auth
-from datetime import datetime
 
 
 """Parse the command line arguments
@@ -315,7 +314,7 @@ def store_doc_in_s3(s3_object_text, company_id, date_of_filing, document_type):
 
 def load_into_elasticsearch(es_document, company_id, date_of_filing, document_type):
     if (es_host):
-        report_period_date = datetime.strptime(date_of_filing, '%Y%m%d')
+        report_period_date = datetime.datetime.strptime(date_of_filing, '%Y%m%d')
         report_year = report_period_date.year
         document_type = document_type.replace('_', '').replace('-','')
         index_name = report_year + '-' + document_type
