@@ -316,7 +316,7 @@ def load_into_elasticsearch(es_document, company_id, date_of_filing, document_ty
     if (es_host):
         report_period_date = datetime.datetime.strptime(date_of_filing, '%Y%m%d')
         report_year = report_period_date.year
-        document_type = document_type.replace('_', '').replace('-','')
+        document_type = document_type.lower().replace('_', '').replace('-','')
         index_name = 'sec' + '-' + str(report_year) + '-' + document_type
 
         service='es'
