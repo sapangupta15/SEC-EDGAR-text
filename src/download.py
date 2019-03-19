@@ -251,16 +251,22 @@ class EdgarCrawler(object):
                     doc_metadata.original_file_name,
                     doc_text, doc_metadata.extraction_method)
                 prepare_text = document_reader.prepare_text()
-                if do_store_in_s3 or do_add_to_es:
-                    document_text_extracted = document_reader.plaintext.strip()
-                    es_doc = ElasticSearchDocument()
-                    es_doc.generate_document_from10k(doc_metadata, document_text_extracted)
-                    if do_store_in_s3:
-                        store_doc_in_s3(json.dumps(es_doc.__dict__), doc_metadata.company_description, 
-                                    doc_metadata.sec_filing_date, doc_metadata.document_type)
-                    if do_add_to_es:
-                        load_into_elasticsearch(json.dumps(es_doc.__dict__), doc_metadata.company_description, 
-                                    doc_metadata.sec_filing_date, doc_metadata.document_type)
+                try:
+                    if do_store_in_s3 or do_add_to_es:
+                        document_text_extracted = document_reader.plaintext.strip()
+                        es_doc = ElasticSearchDocument()
+                        es_doc.generate_document_from10k(doc_metadata, document_text_extracted)
+                        if do_store_in_s3:
+                            store_doc_in_s3(json.dumps(es_doc.__dict__), doc_metadata.company_description, 
+                                            doc_metadata.sec_filing_date, doc_metadata.document_type)
+                        if do_add_to_es:
+                            load_into_elasticsearch(json.dumps(es_doc.__dict__), doc_metadata.company_description, 
+                                                    doc_metadata.sec_filing_date, doc_metadata.document_type)
+                except Exception as e:
+                    logger.error("Failed for company: %s and document_tyoe: %s and report date: %s",
+                                doc_metadata.company_description, doc_metadata.document_type,
+                                str(doc_metadata.sec_filing_date))
+                    logger.exception("failed with message: %s", e.message)
                 sections_log_items = document_reader.\
                     get_excerpt(doc_text, document_group,
                                 doc_metadata,
