@@ -267,6 +267,7 @@ class EdgarCrawler(object):
                                 doc_metadata.company_description, doc_metadata.document_type,
                                 str(doc_metadata.sec_filing_date))
                     logger.exception("failed with message: %s", e.message)
+                finally:
                     pass
                 sections_log_items = document_reader.\
                     get_excerpt(doc_text, document_group,
